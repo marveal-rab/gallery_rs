@@ -1,0 +1,5 @@
+[minio]
+base_url="http://127.0.0.1:9000"
+access_key="aswUsfWOtAFJ5pK24IYI"
+secret_key="ovwGU1nkDHL4xsdzUk62gTm972Lx9F2auy9Rsk2j"
+bucket_name="test-bkt"
