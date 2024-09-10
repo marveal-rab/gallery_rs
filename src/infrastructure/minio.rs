@@ -2,11 +2,7 @@ use std::path::Path;
 
 use actix_web::http::Method;
 use chrono::Duration;
-use minio::s3::args::{
-    AbortMultipartUploadArgs, BucketExistsArgs, CompleteMultipartUploadArgs,
-    CreateMultipartUploadArgs, GetObjectArgs, GetPresignedObjectUrlArgs, ListObjectsArgs,
-    ListObjectsV2Args, MakeBucketArgs, PostPolicy, UploadObjectArgs,
-};
+use minio::s3::args::{AbortMultipartUploadArgs, BucketExistsArgs, CompleteMultipartUploadArgs, CreateMultipartUploadArgs, GetObjectArgs, GetPresignedObjectUrlArgs, ListObjectsArgs, ListObjectsV2Args, MakeBucketArgs, PostPolicy, SelectObjectContentArgs, UploadObjectArgs};
 use minio::s3::client::Client;
 use minio::s3::creds::StaticProvider;
 use minio::s3::http::BaseUrl;
@@ -18,22 +14,6 @@ use crate::config;
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
 pub type Result<T> = std::result::Result<T, Error>;
-
-pub struct MinioConfig {
-    base_url: String,
-    access_key: String,
-    secret_access: String,
-}
-
-impl MinioConfig {
-    pub fn new(base_url: String, access_key: String, secret_access: String) -> MinioConfig {
-        return MinioConfig {
-            base_url,
-            access_key,
-            secret_access,
-        };
-    }
-}
 
 pub struct MinioClient {
     client: Client,
@@ -126,9 +106,23 @@ impl MinioClient {
     }
 
     pub async fn list_objects(&self, dir: &str) -> Result<()> {
+        let args = ListObjectsV2Args {
+            extra_headers: None,
+            extra_query_params: None,
+            region: None,
+            bucket: self.bucket_name,
+            delimiter: Some("/"),
+            encoding_type: None,
+            max_keys: None,
+            prefix: Some(dir),
+            start_after: None,
+            continuation_token: None,
+            fetch_owner: false,
+            include_user_metadata: true,
+        };
         let list_objects_response = self
             .client
-            .list_objects_v2(&ListObjectsV2Args::new(self.bucket_name)?)
+            .list_objects_v2(&args)
             .await?;
         list_objects_response.contents.iter().for_each(|item| {
             println!("{:?}", item);
@@ -150,7 +144,7 @@ impl MinioClient {
     }
 
     pub async fn presign(&self, object_name: &str) -> Result<()> {
-        let expiration = utc_now() + Duration::days(7);
+        let expiration = utc_now() + Duration::hours(1);
         let presign_response = self
             .client
             .get_presigned_post_form_data(&PostPolicy::new(self.bucket_name, &expiration)?)

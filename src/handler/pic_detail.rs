@@ -10,7 +10,7 @@ pub async fn handle(id: u32) -> SimpleResponse<PicDetailDTO> {
     //     .preview("dir/pexels-mateusz-mierzejewski-622168159-17484365.jpg")
     //     .await
     //     .unwrap();
-    let _ = get_minio_client().list_objects("").await.unwrap();
+    let _ = get_minio_client().list_objects("dir/").await.unwrap();
     let resp = simple_resp::success(Some(detail));
     resp
 }
