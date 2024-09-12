@@ -1,2 +1,2 @@
-pub mod list_pic;
-pub mod pic_detail;
+pub mod list;
+pub mod detail;

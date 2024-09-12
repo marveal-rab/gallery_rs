@@ -928,6 +928,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "minio",
+ "reqwest",
  "serde",
  "serde_json",
  "toml",

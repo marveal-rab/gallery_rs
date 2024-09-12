@@ -1,8 +1,10 @@
+use crate::base::{BizError, StatusCode};
+
 #[derive(serde::Serialize)]
 pub struct ListResponse<T: serde::Serialize> {
-    pub data: Vec<T>,
-    pub total: usize,
-    pub status: u16,
+    pub data: Option<Vec<T>>,
+    pub total: Option<u32>,
+    pub status: StatusCode,
     pub msg: String,
 }
 
@@ -15,11 +17,22 @@ impl<T: serde::Serialize> actix_web::Responder for ListResponse<T> {
     }
 }
 
-pub fn success<T: serde::Serialize>(data: Vec<T>, total: usize) -> ListResponse<T> {
-    ListResponse {
-        data,
-        total,
-        status: 0,
-        msg: "success".to_string(),
+impl <T: serde::Serialize> ListResponse<T> {
+    pub fn success(data: Vec<T>, total: u32) -> ListResponse<T> {
+        ListResponse {
+            data: Some(data),
+            total: Some(total),
+            status: StatusCode::Success,
+            msg: "success".to_string(),
+        }
+    }
+
+    pub fn fail(err: BizError) -> ListResponse<T> {
+        ListResponse {
+            data: None,
+            total: None,
+            status: err.code,
+            msg: err.msg,
+        }
     }
 }

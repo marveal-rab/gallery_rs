@@ -7,7 +7,9 @@ use minio::s3::client::Client;
 use minio::s3::creds::StaticProvider;
 use minio::s3::http::BaseUrl;
 use minio::s3::response::UploadObjectResponse;
+use minio::s3::types::Item;
 use minio::s3::utils::utc_now;
+use reqwest::Response;
 use uuid::Uuid;
 
 use crate::config;
@@ -82,17 +84,15 @@ impl MinioClient {
         Ok(upload_object_response)
     }
 
-    pub async fn get_object(&self, object_name: &str) -> Result<()> {
+    pub async fn get_object(&self, object_name: &str) -> Result<Response> {
         let get_object_response = self
             .client
             .get_object(&GetObjectArgs::new(self.bucket_name, object_name)?)
             .await?;
-        let content = get_object_response.text().await?;
-        println!("{}", content);
-        Ok(())
+        Ok(get_object_response)
     }
 
-    pub async fn preview(&self, object_name: &str) -> Result<()> {
+    pub async fn preview(&self, object_name: &str) -> Result<String> {
         let get_presigned_object_url_response = self
             .client
             .get_presigned_object_url(&GetPresignedObjectUrlArgs::new(
@@ -101,11 +101,11 @@ impl MinioClient {
                 Method::GET,
             )?)
             .await?;
-        println!("{}", get_presigned_object_url_response.url);
-        Ok(())
+        println!("[minio] preview object: {:?}", get_presigned_object_url_response);
+        Ok(get_presigned_object_url_response.url)
     }
 
-    pub async fn list_objects(&self, dir: &str) -> Result<()> {
+    pub async fn list_objects(&self, dir: &str) -> Result<Vec<Item>> {
         let args = ListObjectsV2Args {
             extra_headers: None,
             extra_query_params: None,
@@ -124,11 +124,8 @@ impl MinioClient {
             .client
             .list_objects_v2(&args)
             .await?;
-        list_objects_response.contents.iter().for_each(|item| {
-            println!("{:?}", item);
-        });
-        // println!("{:?}", list_objects_response);
-        Ok(())
+        println!("[minio] list objects: {:?}", list_objects_response);
+        Ok(list_objects_response.contents)
     }
 
     pub async fn create_multipart_upload(&self, object_name: &str) -> Result<()> {
